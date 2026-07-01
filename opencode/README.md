@@ -18,11 +18,10 @@ opencode serve
 
 This starts OpenCode's API on `http://127.0.0.1:4096`.
 
-### 2. Start the A2A server
+### 2. Install and start the A2A server
 
 ```bash
-cd agent-servers/opencode
-pip install -e .
+pip install "opencode-a2a @ git+https://github.com/red-hat-data-services/agent-servers.git@opencode#subdirectory=opencode"
 opencode-a2a
 ```
 
