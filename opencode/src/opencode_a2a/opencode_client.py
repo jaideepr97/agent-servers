@@ -1,3 +1,11 @@
+"""
+HTTP client for querying opencode serve.
+
+Fetches agents, providers, and models to build the agent card dynamically.
+All methods return empty lists or None on failure — the card builder
+handles fallbacks.
+"""
+
 from __future__ import annotations
 
 import logging
@@ -21,6 +29,10 @@ class OpencodeClient:
     async def close(self) -> None:
         await self._client.aclose()
 
+    # ---------------------------------------------------------------------------
+    # Internal helpers
+    # ---------------------------------------------------------------------------
+
     async def _get(self, path: str) -> Any | None:
         try:
             resp = await self._client.get(path)
@@ -31,10 +43,15 @@ class OpencodeClient:
             return None
 
     async def _get_data(self, path: str) -> list[dict]:
+        """OpenCode wraps list responses in {"data": [...]}."""
         result = await self._get(path)
         if isinstance(result, dict):
             return result.get("data", [])
         return []
+
+    # ---------------------------------------------------------------------------
+    # Public API — used by agent_card.py
+    # ---------------------------------------------------------------------------
 
     async def fetch_agents(self) -> list[dict]:
         return await self._get_data("/api/agent")

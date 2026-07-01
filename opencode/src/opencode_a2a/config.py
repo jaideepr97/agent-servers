@@ -1,3 +1,10 @@
+"""
+Settings for the OpenCode A2A server.
+
+All values are configurable via environment variables or a .env file.
+CLI flags (--port, --opencode-url) override these after loading.
+"""
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -9,14 +16,26 @@ class Settings(BaseSettings):
         populate_by_name=True,
     )
 
+    # ---------------------------------------------------------------------------
+    # OpenCode connection
+    # ---------------------------------------------------------------------------
+
     opencode_base_url: str = Field(
         default="http://127.0.0.1:4096",
         alias="OPENCODE_BASE_URL",
     )
 
+    # ---------------------------------------------------------------------------
+    # A2A server
+    # ---------------------------------------------------------------------------
+
     a2a_host: str = Field(default="127.0.0.1", alias="A2A_HOST")
     a2a_port: int = Field(default=8000, alias="A2A_PORT")
     a2a_public_url: str | None = Field(default=None, alias="A2A_PUBLIC_URL")
+
+    # ---------------------------------------------------------------------------
+    # Agent card — required fields
+    # ---------------------------------------------------------------------------
 
     a2a_title: str = Field(default="OpenCode", alias="A2A_TITLE")
     a2a_description: str = Field(
@@ -24,6 +43,10 @@ class Settings(BaseSettings):
         alias="A2A_DESCRIPTION",
     )
     a2a_version: str = Field(default="1.0.0", alias="A2A_VERSION")
+
+    # ---------------------------------------------------------------------------
+    # Agent card — optional fields
+    # ---------------------------------------------------------------------------
 
     a2a_documentation_url: str | None = Field(
         default="https://opencode.ai/docs",

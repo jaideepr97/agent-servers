@@ -1,3 +1,13 @@
+"""
+Entry point for the OpenCode A2A server.
+
+Usage:
+  opencode-a2a                                          # defaults
+  opencode-a2a --port 9000                              # custom port
+  opencode-a2a --opencode-url http://localhost:4096      # custom opencode url
+  opencode-a2a --env-file staging.env                    # custom env file
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -28,6 +38,10 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    # ---------------------------------------------------------------------------
+    # Load settings: .env file → env vars → CLI overrides
+    # ---------------------------------------------------------------------------
+
     try:
         settings = Settings(_env_file=args.env_file)
     except Exception as e:
@@ -38,6 +52,10 @@ def main() -> None:
         settings.a2a_port = args.port
     if args.opencode_url is not None:
         settings.opencode_base_url = args.opencode_url
+
+    # ---------------------------------------------------------------------------
+    # Start server
+    # ---------------------------------------------------------------------------
 
     app = create_app(settings)
 

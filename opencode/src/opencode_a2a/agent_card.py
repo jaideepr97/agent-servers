@@ -1,11 +1,36 @@
+"""
+Dynamic A2A agent card builder for OpenCode.
+
+Builds the agent card by combining:
+- Dynamic data from opencode serve (/api/agent, /api/provider, /api/model)
+- Configurable values from env vars (name, version, provider, urls)
+- Hardcoded values that describe OpenCode's actual capabilities
+
+Inspired by https://github.com/Intelligent-Internet/opencode-a2a which
+hardcodes all card fields from settings. We extend that by dynamically
+fetching agents, providers, and models from opencode serve so the card
+reflects the live state of the deployment.
+"""
+
 from __future__ import annotations
 
 from .config import Settings
 from .opencode_client import OpencodeClient
 
+# ---------------------------------------------------------------------------
+# Hardcoded constants
+# ---------------------------------------------------------------------------
+# These describe what OpenCode accepts and returns. OpenCode processes plain
+# text and binary input, returns text and structured JSON. Same values used
+# by opencode-a2a upstream. Not configurable because they are facts about
+# OpenCode, not deployment choices.
+
 DEFAULT_INPUT_MODES = ["text/plain", "application/octet-stream"]
 DEFAULT_OUTPUT_MODES = ["text/plain", "application/json"]
 
+# Example prompts per built-in agent. opencode-a2a upstream also hardcodes
+# examples per skill since opencode serve does not expose example prompts
+# through its API.
 SKILL_EXAMPLES: dict[str, list[str]] = {
     "build": [
         "Fix the failing unit test in auth.py",
@@ -28,6 +53,7 @@ SKILL_EXAMPLES: dict[str, list[str]] = {
     ],
 }
 
+# Used when opencode serve is unreachable.
 FALLBACK_SKILL = {
     "id": "opencode.chat",
     "name": "OpenCode Chat",
@@ -37,6 +63,26 @@ FALLBACK_SKILL = {
     "inputModes": list(DEFAULT_INPUT_MODES),
     "outputModes": list(DEFAULT_OUTPUT_MODES),
 }
+
+
+# ---------------------------------------------------------------------------
+# Skills — dynamic from GET /api/agent
+# ---------------------------------------------------------------------------
+# opencode serve returns all agents including internal ones (compaction, title,
+# summary) marked with hidden: true. We filter those out — only user-facing
+# agents become A2A skills.
+#
+# Skill fields:
+#   id          — dynamic: "opencode.{agent.id}" from /api/agent
+#   name        — dynamic: "OpenCode {agent.id}" titlecased from /api/agent
+#   description — dynamic: agent.description from /api/agent
+#   tags        — dynamic: ["opencode", "coding", agent.mode] from /api/agent
+#   examples    — hardcoded: per-skill prompts (not available from /api/agent)
+#   inputModes  — hardcoded: OpenCode accepts text/plain + octet-stream
+#   outputModes — hardcoded: OpenCode returns text/plain + application/json
+#
+# skills[].parameters is not included — OpenCode skills accept free-text
+# prompts, not structured parameters. opencode-a2a upstream also omits it.
 
 
 def _visible_agents(agents: list[dict]) -> list[dict]:
@@ -73,6 +119,13 @@ def _build_skills(visible: list[dict]) -> list[dict]:
     return skills
 
 
+# ---------------------------------------------------------------------------
+# Description — dynamic, enriched from multiple endpoints
+# ---------------------------------------------------------------------------
+# Base text from env var A2A_DESCRIPTION. Appends agent names from /api/agent,
+# provider names from /api/provider, and model count from /api/model.
+
+
 def _build_description(
     base: str,
     visible: list[dict],
@@ -100,6 +153,15 @@ def _build_description(
     return " ".join(parts)
 
 
+# ---------------------------------------------------------------------------
+# Card assembly
+# ---------------------------------------------------------------------------
+# Combines all three sources:
+#   Configurable (env vars): name, version, url, provider, docs url, icon
+#   Dynamic (opencode serve): skills, description
+#   Hardcoded (OpenCode facts): input/output modes, capabilities
+
+
 async def build_agent_card(settings: Settings, client: OpencodeClient) -> dict:
     agents, providers, models = (
         await client.fetch_agents(),
@@ -109,23 +171,29 @@ async def build_agent_card(settings: Settings, client: OpencodeClient) -> dict:
     visible = _visible_agents(agents)
 
     card: dict = {
+        # Configurable — from env vars
         "name": settings.a2a_title,
+        "version": settings.a2a_version,
+        "url": settings.public_url,
+
+        # Dynamic — built from opencode serve responses
         "description": _build_description(
             settings.a2a_description, visible, providers, models,
         ),
-        "version": settings.a2a_version,
-        "url": settings.public_url,
         "skills": _build_skills(visible),
+
+        # Hardcoded — OpenCode capabilities that don't change per deployment
         "defaultInputModes": list(DEFAULT_INPUT_MODES),
         "defaultOutputModes": list(DEFAULT_OUTPUT_MODES),
         "capabilities": {
-            "streaming": False,
+            "streaming": False,           # not yet — RHAIENG-5826
             "pushNotifications": False,
             "stateTransitionHistory": False,
-            "extensions": [],
+            "extensions": [],             # not yet — RHAIENG-5826
         },
     }
 
+    # Configurable — optional fields from env vars, omitted if not set
     if settings.a2a_provider_org or settings.a2a_provider_url:
         provider = {}
         if settings.a2a_provider_org:

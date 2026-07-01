@@ -1,3 +1,13 @@
+"""
+FastAPI application for the OpenCode A2A server.
+
+Routes:
+  /.well-known/agent-card.json — A2A agent card (dynamic)
+  /.well-known/agent.json      — same card (older A2A spec path)
+  /health                      — proxied from opencode serve
+  /docs                        — Swagger UI
+"""
+
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
@@ -24,11 +34,19 @@ def create_app(settings: Settings) -> FastAPI:
         lifespan=lifespan,
     )
 
+    # ---------------------------------------------------------------------------
+    # A2A discovery
+    # ---------------------------------------------------------------------------
+
     @app.get("/.well-known/agent-card.json")
     @app.get("/.well-known/agent.json")
     async def agent_card():
         card = await build_agent_card(settings, client)
         return JSONResponse(content=card)
+
+    # ---------------------------------------------------------------------------
+    # Health check — proxied from opencode serve
+    # ---------------------------------------------------------------------------
 
     @app.get("/health")
     async def health():
