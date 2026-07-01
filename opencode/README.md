@@ -1,6 +1,6 @@
 # OpenCode A2A Server
 
-Serves an [A2A agent card](https://a2a-protocol.org/latest/specification/) at `/.well-known/agent-card.json` for OpenCode, enabling discovery by the RHOAI agent catalog and [Kagenti](https://kagenti.github.io/.github/).
+Serves an [A2A agent card](https://a2a-protocol.org/latest/specification/) at `/.well-known/agent-card.json` for OpenCode.
 
 ## Prerequisites
 
