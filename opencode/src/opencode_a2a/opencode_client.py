@@ -39,7 +39,7 @@ class OpencodeClient:
             resp.raise_for_status()
             return resp.json()
         except Exception:
-            logger.debug("Failed to fetch %s%s", self._base_url, path)
+            logger.warning("Failed to fetch %s%s", self._base_url, path)
             return None
 
     async def _get_data(self, path: str) -> list[dict]:

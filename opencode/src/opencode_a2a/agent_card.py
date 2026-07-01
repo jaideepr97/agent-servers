@@ -14,6 +14,8 @@ reflects the live state of the deployment.
 
 from __future__ import annotations
 
+import asyncio
+
 from .config import Settings
 from .opencode_client import OpencodeClient
 
@@ -163,10 +165,10 @@ def _build_description(
 
 
 async def build_agent_card(settings: Settings, client: OpencodeClient) -> dict:
-    agents, providers, models = (
-        await client.fetch_agents(),
-        await client.fetch_providers(),
-        await client.fetch_models(),
+    agents, providers, models = await asyncio.gather(
+        client.fetch_agents(),
+        client.fetch_providers(),
+        client.fetch_models(),
     )
     visible = _visible_agents(agents)
 
