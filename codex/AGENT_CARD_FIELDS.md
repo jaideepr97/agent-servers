@@ -13,8 +13,8 @@ How each A2A v1.0.1 agent card field is populated.
 | `supportedInterfaces[].url` | Computed from server settings | Dynamic |
 | `supportedInterfaces[].protocolBinding` | Hardcoded `"HTTP+JSON"` | Static |
 | `supportedInterfaces[].protocolVersion` | `A2A_VERSION` env var | Configurable |
-| `capabilities.streaming` | Hardcoded `false` | Static |
-| `capabilities.pushNotifications` | Hardcoded `false` | Static |
+| `capabilities.streaming` | Hardcoded `false` | Static — will be enabled when full A2A task execution is implemented via the stdio bridge to codex app-server |
+| `capabilities.pushNotifications` | Hardcoded `false` | Static — will be enabled when full A2A task execution is implemented via the stdio bridge to codex app-server |
 | `defaultInputModes` | `A2A_INPUT_MODES` env var (comma-separated) | Configurable, default `["text/plain"]` |
 | `defaultOutputModes` | `A2A_OUTPUT_MODES` env var (comma-separated) | Configurable, default `["text/plain", "application/json"]` |
 | `skills` | Scanned from filesystem `SKILL.md` files | Dynamic |

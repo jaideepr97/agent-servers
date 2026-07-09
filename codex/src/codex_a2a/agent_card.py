@@ -73,6 +73,8 @@ async def build_agent_card(settings: Settings, scanner: SkillScanner) -> dict:
                 "protocolVersion": settings.a2a_version,
             },
         ],
+        # TODO: Enable when full A2A task execution is implemented via
+        # the stdio bridge to codex app-server (SendMessage, streaming, etc.)
         "capabilities": {
             "streaming": False,
             "pushNotifications": False,
